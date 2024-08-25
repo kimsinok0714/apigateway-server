@@ -1,0 +1,76 @@
+spring:
+  cloud:
+    config:
+      uri: http://localhost:8888     # Spring Cloud Config Server
+    
+    gateway:                         # Spring Cloud Gateway Server
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: item-service  # 마이크로 백엔드 서비스를 식별하기 위한 id
+          uri: lb://ITEM-SERVICE # 트래픽을 라우팅하고자 하는 마이크로 백엔드 서비스 이름(Eureka 서비스 리포지토리에 등록된 서비스 이름)
+          predicates:
+            - Path=/api/v1/items/**
+          
+        - id: department-service  # 마이크로 백엔드 서비스를 식별하기 위한 id
+          uri: lb://DEPARTMENT-SERVICE # 트래픽을 라우팅하고자 하는 마이크로 백엔드 서비스 이름(Eureka 서비스 리포지토리에 등록된 서비스 이름)
+          predicates:
+            - Path=/api/v1/departments/**
+
+        - id: aggregate-route
+          uri: http://localhost:8070
+          predicates:
+            - Path=/api/v1/aggregate
+
+
+          
+  datasource:
+    #url: jdbc:mysql://db-server:3306/item_db
+    url: jdbc:mysql://127.0.0.1:3306/account_db
+    username: root
+    password: 1234
+    # password: "{cipher}4b26e49a9df146d379e3cdf9a19296bcecc2f8fafc80a35fade7c7e605ee039c"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update  # none (실제 운영), update
+    show-sql: true      # 실행되는 SQL문을 화면에 출력
+    properties:         
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+
+# 로깅 처리
+logging:
+  file:
+    name: logs/apigateway.log
+    max-size: 500MB
+    max-history: 10
+  level:
+    root: info
+    '[com.mzc.apigateway_server]': debug
+    '[org.springframework.web]': DEBUG
+    '[reactor.core.publisher.Operators]': DEBUG
+    '[reactor]': DEBUG
+
+
+
+# Eureka Server에 자가 등록
+eureka:
+  instance:
+    prefer-ip-address: true   # Eureka 클라이언트가 자신을 등록할 때, 호스트 이름 대신 IP 주소를 사용하여 서비스 레지스리에 등록한다. 
+  client:  
+    register-with-eureka: true   
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/        
+      # defaultZone: ${UREKA_CLIENT_SERVICE_URL}  # http://localhost:8761/eureka/
+                
